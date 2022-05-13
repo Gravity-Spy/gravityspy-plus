@@ -100,7 +100,7 @@ class GravitySpySubjectManager(models.Manager):
             self.frametypes.append('{0}_R'.format(ifo))
         self.all_channels.extend(self.list_of_auxiliary_channel_names)
 
-        gravityspy_plus_subject = self.create(title=title)
+        gravityspy_plus_subject = self.create(event_time=self.event_time, gravityspy_id=self.gravityspy_id, ifo=self.ifo, main_channel=self.main_channel, event_generator=str(self.event_generator), q_values=self.q_values, list_of_auxiliary_channel_names=self.list_of_auxiliary_channel_names, zooniverse_subject_ids=[])
 
         # do something with the book
         return gravityspy_plus_subject

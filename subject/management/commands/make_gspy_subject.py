@@ -6,29 +6,50 @@ from gravityspy_ligo.utils import utils
 class Command(BaseCommand):
     help = 'Querying hveto results and product Gravity Spy Plus subjects'
     def add_arguments(self, parser):
-        parser.add_argument("--start-time", type=int, required=True)
-        parser.add_argument("--end-time", type=int, required=True)
+        parser.add_argument("--start-time", type=float)
+        parser.add_argument("--end-time", type=float)
+        parser.add_argument("--event-time", type=float, default=None)
+        parser.add_argument("--ifo")
+        parser.add_argument("--manual-list-of-auxiliary-channel-names", nargs="+")
 
     def handle(self, *args, **options):
 
         ### Select the parameters of the spectrograms/q_transforms you will be plotting (including all of the different plotting windows your would like
         config = utils.GravitySpyConfigFile(plot_time_ranges=[8.0, 4.0, 1.0])
 
-        ### Get list of GPS times which correspond with a glitch occur in the main channel. This can either be done manually, querying omicron directly, or uses hveto's glitches list for a given day.
-        start_time = options['start_time']
-        end_time = options['end_time']
+        # If we have a specific
+        if options['event_time'] is not None:
 
-        table_of_glitch_times = Events.get_triggers(start=start_time, end=end_time, channel='H1:GDS-CALIB_STRAIN', dqflag=None, algorithm='hveto', verbose=True)
+            # initialize the Django model
+            sub = GravitySpySubject.objects.create_gravityspy_subject(event_time=options['event_time'], ifo=options['ifo'], config=config, manual_list_of_auxiliary_channel_names=options['manual_list_of_auxiliary_channel_names'])
 
-        table_of_glitch_times = table_of_glitch_times[0:2]
+            # Make the spectrograms/omega scans for each data stream
+            GravitySpySubject.objects.make_omega_scans(verbose=False, nproc=1)
 
-        for event_time, round_number in zip(table_of_glitch_times['time'], table_of_glitch_times['hveto_round']):
+            # Save the spectrograms as PNGs with specific settings                
+            GravitySpySubject.objects.save_omega_scans(verbose=False, nproc=1)
+
+            # Combine the individual spectrogram images into images with 1 columns and 4 rows
+            GravitySpySubject.objects.combine_images_for_subject_upload()
+
+            # upload the subject to zooniverse 
+            GravitySpySubject.objects.upload_to_zooniverse(subject_set_id=103434)
             breakpoint()
-            sub = GravitySpySubject.objects.create_gravityspy_subject(event_time=event_time, ifo="H1", config=config, auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=6)
-            breakpoint()
-            sub.make_omega_scans(verbose=False, nproc=7)
-            sub.save_omega_scans(verbose=False, nproc=7)
-            # This method needs to be written
-            sub.combine_images_for_subject_upload()
-            # no need to upload data to zooniverse until we finalize the way we combine the spectrograms into a single user friendly image
-            sub.upload_to_zooniverse(subject_set_id=103434)
+        else:
+            ### Get list of GPS times which correspond with a glitch occur in the main channel. This can either be done manually, querying omicron directly, or uses hveto's glitches list for a given day.
+            start_time = options['start_time']
+            end_time = options['end_time']
+
+            table_of_glitch_times = Events.get_triggers(start=start_time, end=end_time, channel='H1:GDS-CALIB_STRAIN', dqflag=None, algorithm='hveto', verbose=True)
+
+            table_of_glitch_times = table_of_glitch_times[0:2]
+
+            for event_time, round_number in zip(table_of_glitch_times['time'], table_of_glitch_times['hveto_round']):
+                sub = GravitySpySubject.objects.create_gravityspy_subject(event_time=event_time, ifo="H1", config=config, auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=6)
+                GravitySpySubject.objects.make_omega_scans(verbose=False, nproc=7)
+                GravitySpySubject.objects.save_omega_scans(verbose=False, nproc=7)
+                # This method needs to be written
+                GravitySpySubject.objects.combine_images_for_subject_upload()
+                # no need to upload data to zooniverse until we finalize the way we combine the spectrograms into a single user friendly image
+                GravitySpySubject.objects.upload_to_zooniverse(subject_set_id=103434)
+                breakpoint()
