@@ -34,7 +34,9 @@ class Command(BaseCommand):
 
             # upload the subject to zooniverse 
             GravitySpySubject.objects.upload_to_zooniverse(subject_set_id=103434)
-            breakpoint()
+
+            # save out subject
+            sub.save()
         else:
             ### Get list of GPS times which correspond with a glitch occur in the main channel. This can either be done manually, querying omicron directly, or uses hveto's glitches list for a given day.
             start_time = options['start_time']

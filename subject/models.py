@@ -56,6 +56,7 @@ class GravitySpySubjectManager(models.Manager):
         self.ldvw_glitchdb_image_filenames = []
         self.zooniverse_subject_image_filenames = []
         self.zooniverse_subject_ids = []
+        self.hveto_round_number = -1
 
         # If a manual list of auxiliary channels were provided, we can set a lot fo these attributes right now.
         if manual_list_of_auxiliary_channel_names is not None:
@@ -73,6 +74,7 @@ class GravitySpySubjectManager(models.Manager):
 
             # if we passed 'hveto' as our algorith, we must also have identified what round this glitch is associated with.
             round_number = auxiliary_channel_correlation_algorithm['hveto']
+            self.hveto_round_number = round_number
 
             self.auxiliary_channel_correlation_algorithm = auxiliary_channel_correlation_algorithm
             self.number_of_aux_channels_to_show = number_of_aux_channels_to_show
@@ -101,7 +103,7 @@ class GravitySpySubjectManager(models.Manager):
             self.frametypes.append('{0}_R'.format(ifo))
         self.all_channels.extend(self.list_of_auxiliary_channel_names)
 
-        gravityspy_plus_subject = self.create(event_time=self.event_time, gravityspy_id=self.gravityspy_id, ifo=self.ifo, main_channel=self.main_channel, event_generator=str(self.event_generator), q_values=self.q_values, list_of_auxiliary_channel_names=self.list_of_auxiliary_channel_names, zooniverse_subject_ids=[])
+        gravityspy_plus_subject = self.create(event_time=self.event_time, gravityspy_id=self.gravityspy_id, ifo=self.ifo, main_channel=self.main_channel, event_generator=str(self.event_generator), q_values=self.q_values, list_of_auxiliary_channel_names=self.list_of_auxiliary_channel_names, zooniverse_subject_ids=self.zooniverse_subject_ids, hveto_round_number=self.hveto_round_number)
 
         # do something with the book
         return gravityspy_plus_subject
@@ -258,5 +260,6 @@ class GravitySpySubject(models.Model):
     q_values = ArrayField(models.FloatField())
     list_of_auxiliary_channel_names = ArrayField(models.CharField(max_length=100))
     zooniverse_subject_ids = ArrayField(models.IntegerField())
+    hveto_round_number = models.IntegerField()
 
     objects = GravitySpySubjectManager()
