@@ -55,6 +55,7 @@ class GravitySpySubjectManager(models.Manager):
         self.q_transforms = []
         self.ldvw_glitchdb_image_filenames = []
         self.zooniverse_subject_image_filenames = []
+        self.zooniverse_subject_ids = []
 
         # If a manual list of auxiliary channels were provided, we can set a lot fo these attributes right now.
         if manual_list_of_auxiliary_channel_names is not None:
@@ -239,7 +240,7 @@ class GravitySpySubjectManager(models.Manager):
                 subject.add_location(str(image))
                 subject.metadata['Filename{0}'.format(idx+1)] = image.split('/')[-1]
             subject.save()
-            self.zooniverse_id = int(subject.id)
+            self.zooniverse_subject_ids.append(int(subject.id))
             for idx, image in enumerate(images_for_subject_part):
                 setattr(self, 'url{0}'.format(idx), subject.raw['locations'][idx]['image/png'].split('?')[0])
 
