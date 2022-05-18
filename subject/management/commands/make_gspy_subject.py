@@ -63,7 +63,5 @@ class Command(BaseCommand):
                 # upload the subject to zooniverse 
                 GravitySpySubject.objects.upload_to_zooniverse(subject_set_id=103434)
 
-                breakpoint()
-
                 # save out subject
                 sub.save()
