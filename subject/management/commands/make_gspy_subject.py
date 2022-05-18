@@ -42,16 +42,28 @@ class Command(BaseCommand):
             start_time = options['start_time']
             end_time = options['end_time']
 
-            table_of_glitch_times = Events.get_triggers(start=start_time, end=end_time, channel='H1:GDS-CALIB_STRAIN', dqflag=None, algorithm='hveto', verbose=True)
+            table_of_glitch_times = Events.get_triggers(start=start_time, end=end_time, channel='{0}:GDS-CALIB_STRAIN'.format(options['ifo']), dqflag=None, algorithm='hveto', verbose=True)
 
-            table_of_glitch_times = table_of_glitch_times[0:2]
+            table_of_glitch_times = Events.from_pandas(table_of_glitch_times.to_pandas().groupby("hveto_round").sample(n=9))
 
             for event_time, round_number in zip(table_of_glitch_times['time'], table_of_glitch_times['hveto_round']):
-                sub = GravitySpySubject.objects.create_gravityspy_subject(event_time=event_time, ifo="H1", config=config, auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=6)
+
+                # initialize the Django model
+                sub = GravitySpySubject.objects.create_gravityspy_subject(event_time=event_time, ifo=options['ifo'], config=config, auxiliary_channel_correlation_algorithm={'hveto':round_number}, number_of_aux_channels_to_show=9)
+
+                # Make the spectrograms/omega scans for each data stream
                 GravitySpySubject.objects.make_omega_scans(verbose=False, nproc=7)
+
+                # Save the spectrograms as PNGs with specific settings  
                 GravitySpySubject.objects.save_omega_scans(verbose=False, nproc=7)
-                # This method needs to be written
+
+                # Combine the individual spectrogram images into images with 1 columns and 4 rows
                 GravitySpySubject.objects.combine_images_for_subject_upload()
-                # no need to upload data to zooniverse until we finalize the way we combine the spectrograms into a single user friendly image
+
+                # upload the subject to zooniverse 
                 GravitySpySubject.objects.upload_to_zooniverse(subject_set_id=103434)
+
                 breakpoint()
+
+                # save out subject
+                sub.save()
