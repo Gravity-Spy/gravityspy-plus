@@ -56,6 +56,7 @@ INSTALLED_APPS = [
 
     # gravityspy_plus apps
     'subject.apps.GravitySpySubjectConfig',
+    'classification.apps.ClassificationConfig',
 ]
 
 MIDDLEWARE = [
