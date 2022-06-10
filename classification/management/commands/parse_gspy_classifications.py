@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 break
 
         for classification in list_of_classification_dictionaries:
-            if classification['links']['workflow'] == '12074':
+            if classification['links']['workflow'] == '21793':
                 print("id is {0}".format(classification['id']))
                 print("annotation is {0}".format(classification['annotations']))
                 print("workflow is {0}".format(classification['links']['workflow']))
